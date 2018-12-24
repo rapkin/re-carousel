@@ -63,14 +63,14 @@ class Carousel extends React.Component {
 
   static getDerivedStateFromProps(nextProps, prevState) {
     const frames = [].concat(nextProps.frames || nextProps.children || [])
-    const nextState = { frames } 
+    const nextState = { frames }
     if (frames.length && frames.length !== prevState.frames.length) {
       nextState.current = 0
     }
     return nextState
   }
 
-  hideFrames = () => {
+  hideFrames () {
     for (let i = 1; i < this.state.frames.length; i++) {
       this.refs['f' + i].style.opacity = 0
     }
