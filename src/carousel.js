@@ -24,9 +24,11 @@ class Carousel extends React.Component {
     }
 
     this.mounted = false
+    this.debounceTimeoutId = null
     this.onTouchStart = this.onTouchStart.bind(this)
     this.onTouchMove = this.onTouchMove.bind(this)
     this.onTouchEnd = this.onTouchEnd.bind(this)
+    this.onResize = this.onResize.bind(this)
     this.autoSlide = this.autoSlide.bind(this)
     this.prev = this.prev.bind(this)
     this.next = this.next.bind(this)
@@ -43,6 +45,7 @@ class Carousel extends React.Component {
 
     this.refs.wrapper.addEventListener('touchmove', this.onTouchMove, {capture: true})
     this.refs.wrapper.addEventListener('touchend', this.onTouchEnd, {capture: true})
+    window.addEventListener('resize', this.onResize);
   }
 
   componentWillUnmount () {
@@ -51,6 +54,7 @@ class Carousel extends React.Component {
 
     this.refs.wrapper.removeEventListener('touchmove', this.onTouchMove, {capture: true})
     this.refs.wrapper.removeEventListener('touchend', this.onTouchEnd, {capture: true})
+    window.removeEventListener('resize', this.onResize);
   }
 
   componentDidUpdate(_, prevState) {
@@ -74,6 +78,15 @@ class Carousel extends React.Component {
     for (let i = 1; i < this.state.frames.length; i++) {
       this.refs['f' + i].style.opacity = 0
     }
+  }
+
+  onResize() {
+    clearTimeout(this.debounceTimeoutId);
+    this.debounceTimeoutId = setTimeout(() => {
+      this.updateFrameSize(() => {
+        this.prepareSiblingFrames();
+      });
+    }, 25);
   }
 
   onTouchStart (e) {
