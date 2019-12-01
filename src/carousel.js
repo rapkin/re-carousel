@@ -263,18 +263,16 @@ class Carousel extends React.Component {
     this.autoSlide('prev')
   }
 
-  async setFrame(index) {
+  setFrame (index, ms = 450) {
     const diff = Math.abs(index - this.state.currentFrameIndex);
-
     if (index < this.state.currentFrameIndex) {
       for (let i = 0; i < diff; i++) {
-        // wait for the promise to resolve before advancing the for loop
-        await this.prev();
+        setTimeout(() => this.prev(), i * ms);
       }
-    } else if (index > this.state.currentFrameIndex) {
+    }
+    else if (index > this.state.currentFrameIndex) {
       for (let i = 0; i < diff; i++) {
-        // wait for the promise to resolve before advancing the for loop
-        await this.next();
+        setTimeout(() => this.next(), i * ms);
       }
     }
   }
