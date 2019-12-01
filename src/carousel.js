@@ -20,7 +20,7 @@ class Carousel extends React.Component {
 
     this.state = {
       frames: [].concat(props.frames || props.children || []),
-      current: 0
+      currentFrameIndex: props.currentFrameIndex
     }
 
     this.mounted = false
@@ -32,6 +32,7 @@ class Carousel extends React.Component {
     this.autoSlide = this.autoSlide.bind(this)
     this.prev = this.prev.bind(this)
     this.next = this.next.bind(this)
+    this.setFrame = this.setFrame.bind(this)
 
     if (props.loop === false && props.auto) {
       console.warn('[re-carousel] Auto-slide only works in loop mode.')
@@ -69,7 +70,7 @@ class Carousel extends React.Component {
     const frames = [].concat(nextProps.frames || nextProps.children || [])
     const nextState = { frames }
     if (frames.length && frames.length !== prevState.frames.length) {
-      nextState.current = 0
+      nextState.currentFrameIndex = 0
     }
     return nextState
   }
@@ -90,7 +91,7 @@ class Carousel extends React.Component {
   }
 
   onTouchStart (e) {
-    if (this.state.total < 2) return
+    if (this.state.frames.length < 2) return;
     // e.preventDefault()
 
     this.clearAutoTimeout()
@@ -133,11 +134,11 @@ class Carousel extends React.Component {
 
     // when reach frames edge in non-loop mode, reduce drag effect.
     if (!this.props.loop) {
-      if (this.state.current === this.state.frames.length - 1) {
+      if (this.state.currentFrameIndex === this.state.frames.length - 1) {
         deltaX < 0 && (deltaX /= 3)
         deltaY < 0 && (deltaY /= 3)
       }
-      if (this.state.current === 0) {
+      if (this.state.currentFrameIndex === 0) {
         deltaX > 0 && (deltaX /= 3)
         deltaY > 0 && (deltaY /= 3)
       }
@@ -159,21 +160,21 @@ class Carousel extends React.Component {
   }
 
   decideEndPosition () {
-    const { deltaX = 0, deltaY = 0, current, frames } = this.state
+    const { deltaX = 0, deltaY = 0, currentFrameIndex, frames } = this.state
     const { axis, loop, minMove } = this.props
 
     switch (axis) {
       case 'x':
         if (loop === false) {
-          if (current === 0 && deltaX > 0) return 'origin'
-          if (current === frames.length - 1 && deltaX < 0) return 'origin'
+          if (currentFrameIndex === 0 && deltaX > 0) return 'origin'
+          if (currentFrameIndex === frames.length - 1 && deltaX < 0) return 'origin'
         }
         if (Math.abs(deltaX) < minMove) return 'origin'
         return deltaX > 0 ? 'right' : 'left'
       case 'y':
         if (loop === false) {
-          if (current === 0 && deltaY > 0) return 'origin'
-          if (current === frames.length - 1 && deltaY < 0) return 'origin'
+          if (currentFrameIndex === 0 && deltaY > 0) return 'origin'
+          if (currentFrameIndex === frames.length - 1 && deltaY < 0) return 'origin'
         }
         if (Math.abs(deltaY) < minMove) return 'origin'
         return deltaY > 0 ? 'down' : 'up'
@@ -182,12 +183,12 @@ class Carousel extends React.Component {
   }
 
   moveFramesBy (deltaX, deltaY) {
-    const { prev, current, next } = this.state.movingFrames
+    const { prev, currentFrameIndex, next } = this.state.movingFrames
     const { frameWidth, frameHeight } = this.state
 
     switch (this.props.axis) {
       case 'x':
-        translateXY(current, deltaX, 0)
+        translateXY(currentFrameIndex, deltaX, 0)
         if (deltaX < 0) {
           translateXY(next, deltaX + frameWidth, 0)
         } else {
@@ -195,7 +196,7 @@ class Carousel extends React.Component {
         }
         break
       case 'y':
-        translateXY(current, 0, deltaY)
+        translateXY(currentFrameIndex, 0, deltaY)
         if (deltaY < 0) {
           translateXY(next, 0, deltaY + frameHeight)
         } else {
@@ -239,13 +240,13 @@ class Carousel extends React.Component {
   }
 
   next () {
-    const { current, frames } = this.state
-    if (!this.props.loop && current === frames.length - 1) return false
+    const { currentFrameIndex, frames } = this.state
+    if (!this.props.loop && currentFrameIndex === frames.length - 1) return false
     this.autoSlide('next')
   }
 
   prev () {
-    if (!this.props.loop && this.state.current === 0) return false
+    if (!this.props.loop && this.state.currentFrameIndex === 0) return false
     const { prev, next } = this.state.movingFrames
 
     if (prev === next) {
@@ -262,21 +263,39 @@ class Carousel extends React.Component {
     this.autoSlide('prev')
   }
 
+  async setFrame(index) {
+    const diff = Math.abs(index - this.state.currentFrameIndex);
+
+    if (index < this.state.currentFrameIndex) {
+      for (let i = 0; i < diff; i++) {
+        // wait for the promise to resolve before advancing the for loop
+        await this.prev();
+      }
+    } else if (index > this.state.currentFrameIndex) {
+      for (let i = 0; i < diff; i++) {
+        // wait for the promise to resolve before advancing the for loop
+        await this.next();
+      }
+    }
+  }
+
   clearAutoTimeout () {
     clearTimeout(this.state.slider)
   }
 
   updateFrameSize (cb) {
-    const { width, height } = window.getComputedStyle(this.refs.wrapper)
-    this.setState({
-      frameWidth: parseFloat(width.split('px')[0]),
-      frameHeight: parseFloat(height.split('px')[0])
-    }, cb)
+    if (this.refs.wrapper) {
+      const { width, height } = window.getComputedStyle(this.refs.wrapper)
+      this.setState({
+        frameWidth: parseFloat(width.split('px')[0]),
+        frameHeight: parseFloat(height.split('px')[0])
+      }, cb)
+    }
   }
 
   getSiblingFrames () {
     return {
-      current: this.refs['f' + this.getFrameId()],
+      currentFrameIndex: this.refs['f' + this.getFrameId()],
       prev: this.refs['f' + this.getFrameId('prev')],
       next: this.refs['f' + this.getFrameId('next')]
     }
@@ -286,14 +305,14 @@ class Carousel extends React.Component {
     const siblings = this.getSiblingFrames()
 
     if (!this.props.loop) {
-      this.state.current === 0 && (siblings.prev = undefined)
-      this.state.current === this.state.frames.length - 1 && (siblings.next = undefined)
+      this.state.currentFrameIndex === 0 && (siblings.prev = undefined)
+      this.state.currentFrameIndex === this.state.frames.length - 1 && (siblings.next = undefined)
     }
 
     this.setState({ movingFrames: siblings })
 
     // prepare frames position
-    translateXY(siblings.current, 0, 0)
+    translateXY(siblings.currentFrameIndex, 0, 0)
     if (this.props.axis === 'x') {
       translateXY(siblings.prev, -this.state.frameWidth, 0)
       translateXY(siblings.next, this.state.frameWidth, 0)
@@ -306,46 +325,46 @@ class Carousel extends React.Component {
   }
 
   getFrameId (pos) {
-    const { frames, current } = this.state
+    const { frames, currentFrameIndex } = this.state
     const total = frames.length
     switch (pos) {
       case 'prev':
-        return (current - 1 + total) % total
+        return (currentFrameIndex - 1 + total) % total
       case 'next':
-        return (current + 1) % total
+        return (currentFrameIndex + 1) % total
       default:
-        return current
+        return currentFrameIndex
     }
   }
 
   transitFramesTowards (direction) {
-    const { prev, current, next } = this.state.movingFrames
+    const { prev, currentFrameIndex, next } = this.state.movingFrames
     const { duration, axis, onTransitionEnd } = this.props
 
-    let newCurrentId = this.state.current
+    let newcurrentFrameIndexId = this.state.currentFrameIndex
     switch (direction) {
       case 'up':
-        translateXY(current, 0, -this.state.frameHeight, duration)
+        translateXY(currentFrameIndex, 0, -this.state.frameHeight, duration)
         translateXY(next, 0, 0, duration)
-        newCurrentId = this.getFrameId('next')
+        newcurrentFrameIndexId = this.getFrameId('next')
         break
       case 'down':
-        translateXY(current, 0, this.state.frameHeight, duration)
+        translateXY(currentFrameIndex, 0, this.state.frameHeight, duration)
         translateXY(prev, 0, 0, duration)
-        newCurrentId = this.getFrameId('prev')
+        newcurrentFrameIndexId = this.getFrameId('prev')
         break
       case 'left':
-        translateXY(current, -this.state.frameWidth, 0, duration)
+        translateXY(currentFrameIndex, -this.state.frameWidth, 0, duration)
         translateXY(next, 0, 0, duration)
-        newCurrentId = this.getFrameId('next')
+        newcurrentFrameIndexId = this.getFrameId('next')
         break
       case 'right':
-        translateXY(current, this.state.frameWidth, 0, duration)
+        translateXY(currentFrameIndex, this.state.frameWidth, 0, duration)
         translateXY(prev, 0, 0, duration)
-        newCurrentId = this.getFrameId('prev')
+        newcurrentFrameIndexId = this.getFrameId('prev')
         break
       default: // back to origin
-        translateXY(current, 0, 0, duration)
+        translateXY(currentFrameIndex, 0, 0, duration)
         if (axis === 'x') {
           translateXY(prev, -this.state.frameWidth, 0, duration)
           translateXY(next, this.state.frameWidth, 0, duration)
@@ -357,11 +376,11 @@ class Carousel extends React.Component {
 
     onTransitionEnd && setTimeout(() => onTransitionEnd(this.getSiblingFrames()), duration)
 
-    this.setState({ current: newCurrentId })
+    this.setState({currentFrameIndex: newcurrentFrameIndexId })
   }
 
   // debugFrames () {
-  //   console.log('>>> DEBUG-FRAMES: current', this.state.current)
+  //   console.log('>>> DEBUG-FRAMES: currentFrameIndex', this.state.currentFrameIndex)
   //   const len = this.state.frames.length
   //   for (let i = 0; i < len; ++i) {
   //     const ref = this.refs['f' + i]
@@ -370,7 +389,7 @@ class Carousel extends React.Component {
   // }
 
   render () {
-    const { frames, current } = this.state
+    const { frames, currentFrameIndex } = this.state
     const { widgets, axis, loop, auto, interval } = this.props
     const wrapperStyle = objectAssign(styles.wrapper, this.props.style)
 
@@ -394,10 +413,11 @@ class Carousel extends React.Component {
           widgets && [].concat(widgets).map((Widget, i) => (
             <Widget
               key={i}
-              index={current}
+              index={currentFrameIndex}
               total={frames.length}
               prevHandler={this.prev}
               nextHandler={this.next}
+              setFrameHandler={this.setFrame}
               axis={axis} loop={loop} auto={auto} interval={interval} />
           ))
         }
@@ -409,6 +429,7 @@ class Carousel extends React.Component {
 Carousel.propTypes = {
   axis: PropTypes.oneOf(['x', 'y']),
   auto: PropTypes.bool,
+  currentFrameIndex: PropTypes.number,
   loop: PropTypes.bool,
   interval: PropTypes.number,
   duration: PropTypes.number,
@@ -422,6 +443,7 @@ Carousel.propTypes = {
 Carousel.defaultProps = {
   axis: 'x',
   auto: false,
+  currentFrameIndex: 0,
   loop: false,
   interval: 5000,
   duration: 300,
