@@ -47,6 +47,10 @@ class Carousel extends React.Component {
     this.refs.wrapper.addEventListener('touchmove', this.onTouchMove, {capture: true})
     this.refs.wrapper.addEventListener('touchend', this.onTouchEnd, {capture: true})
     window.addEventListener('resize', this.onResize);
+
+    if (this.props.currentFrameIndex) {
+      this.setFrame(this.props.currentFrameIndex);
+    }
   }
 
   componentWillUnmount () {
@@ -263,7 +267,16 @@ class Carousel extends React.Component {
     this.autoSlide('prev')
   }
 
-  setFrame (index, ms = 450) {
+  setFrame (index, ms = undefined) {
+
+    if (!ms) {
+      this.setState({
+        currentFrameIndex: index
+      })
+      this.prepareSiblingFrames(true, index);
+      return;
+    }
+
     const diff = Math.abs(index - this.state.currentFrameIndex);
     if (index < this.state.currentFrameIndex) {
       for (let i = 0; i < diff; i++) {
@@ -299,8 +312,17 @@ class Carousel extends React.Component {
     }
   }
 
-  prepareSiblingFrames () {
-    const siblings = this.getSiblingFrames()
+  getSiblingFramesByOverride (index) {
+    return {
+      currentFrameIndex: this.refs['f' + index],
+      prev: this.refs['f' + this.getFrameId('prev', index)],
+      next: this.refs['f' + this.getFrameId('next', index)]
+    }
+  }
+
+  prepareSiblingFrames (override = false, index = undefined) {
+
+    const siblings = override ? this.getSiblingFramesByOverride(index) : this.getSiblingFrames()
 
     if (!this.props.loop) {
       this.state.currentFrameIndex === 0 && (siblings.prev = undefined)
@@ -322,16 +344,16 @@ class Carousel extends React.Component {
     return siblings
   }
 
-  getFrameId (pos) {
-    const { frames, currentFrameIndex } = this.state
+  getFrameId (pos, current=this.state.currentFrameIndex) {
+    const { frames } = this.state
     const total = frames.length
     switch (pos) {
       case 'prev':
-        return (currentFrameIndex - 1 + total) % total
+        return (current - 1 + total) % total
       case 'next':
-        return (currentFrameIndex + 1) % total
+        return (current + 1) % total
       default:
-        return currentFrameIndex
+        return current
     }
   }
 
@@ -401,7 +423,7 @@ class Carousel extends React.Component {
           onMouseDown={this.onTouchStart} >
           {
             frames.map((frame, i) => {
-              const frameStyle = objectAssign({zIndex: 99 - i}, styles.frame)
+              const frameStyle = objectAssign({zIndex: 99 - (Math.abs(currentFrameIndex - i))}, styles.frame)
               return <div ref={'f' + i} key={i} style={frameStyle}>{frame}</div>
             })
           }

@@ -24,10 +24,14 @@ class App extends React.Component {
           <span className={this.state.axis === 'y' ? 'axis current' : 'axis'}
             onClick={this.setAxis('y')}>vertical</span>
         </header>
-        <Carousel loop auto axis={this.state.axis} widgets={[Dots, Buttons]} className="custom-class">
-          <p style={{backgroundColor: 'royalblue', height: '100%'}}>FRAME 1</p>
+        <Carousel loop currentFrameIndex={3} axis={this.state.axis} widgets={[Dots, Buttons]} className="custom-class">
+    <p style={{backgroundColor: 'royalblue', height: '100%'}}>FRAME 1</p>
           <p style={{backgroundColor: 'orange', height: '100%'}}>FRAME 2</p>
           <p style={{backgroundColor: 'orchid', height: '100%'}}>FRAME 3</p>
+          <p style={{backgroundColor: 'red', height: '100%'}}>FRAME 4</p>
+          <p style={{backgroundColor: 'green', height: '100%'}}>FRAME 5</p>
+          <p style={{backgroundColor: 'blue', height: '100%'}}>FRAME 6</p>
+          <p style={{backgroundColor: 'pink', height: '100%'}}>FRAME 7</p>
         </Carousel>
       </div>
     )
