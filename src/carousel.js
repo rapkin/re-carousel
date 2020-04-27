@@ -20,7 +20,7 @@ class Carousel extends React.Component {
 
     this.state = {
       frames: [].concat(props.frames || props.children || []),
-      currentFrameIndex: props.currentFrameIndex
+      currentFrameIndex: props.onStartFrameIndex
     }
 
     this.mounted = false
@@ -48,8 +48,8 @@ class Carousel extends React.Component {
     this.refs.wrapper.addEventListener('touchend', this.onTouchEnd, {capture: true})
     window.addEventListener('resize', this.onResize);
 
-    if (this.props.currentFrameIndex) {
-      this.setFrame(this.props.currentFrameIndex);
+    if (this.state.currentFrameIndex) {
+      this.setFrame(this.state.currentFrameIndex);
     }
   }
 
@@ -449,7 +449,7 @@ class Carousel extends React.Component {
 Carousel.propTypes = {
   axis: PropTypes.oneOf(['x', 'y']),
   auto: PropTypes.bool,
-  currentFrameIndex: PropTypes.number,
+  onStartFrameIndex: PropTypes.number,
   loop: PropTypes.bool,
   interval: PropTypes.number,
   duration: PropTypes.number,
@@ -463,7 +463,7 @@ Carousel.propTypes = {
 Carousel.defaultProps = {
   axis: 'x',
   auto: false,
-  currentFrameIndex: 0,
+  onStartFrameIndex: 0,
   loop: false,
   interval: 5000,
   duration: 300,
