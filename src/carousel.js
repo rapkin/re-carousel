@@ -361,27 +361,27 @@ class Carousel extends React.Component {
     const { prev, currentFrameIndex, next } = this.state.movingFrames
     const { duration, axis, onTransitionEnd } = this.props
 
-    let newcurrentFrameIndexId = this.state.currentFrameIndex
+    let newCurrentFrameIndexId = this.state.currentFrameIndex
     switch (direction) {
       case 'up':
         translateXY(currentFrameIndex, 0, -this.state.frameHeight, duration)
         translateXY(next, 0, 0, duration)
-        newcurrentFrameIndexId = this.getFrameId('next')
+        newCurrentFrameIndexId = this.getFrameId('next')
         break
       case 'down':
         translateXY(currentFrameIndex, 0, this.state.frameHeight, duration)
         translateXY(prev, 0, 0, duration)
-        newcurrentFrameIndexId = this.getFrameId('prev')
+        newCurrentFrameIndexId = this.getFrameId('prev')
         break
       case 'left':
         translateXY(currentFrameIndex, -this.state.frameWidth, 0, duration)
         translateXY(next, 0, 0, duration)
-        newcurrentFrameIndexId = this.getFrameId('next')
+        newCurrentFrameIndexId = this.getFrameId('next')
         break
       case 'right':
         translateXY(currentFrameIndex, this.state.frameWidth, 0, duration)
         translateXY(prev, 0, 0, duration)
-        newcurrentFrameIndexId = this.getFrameId('prev')
+        newCurrentFrameIndexId = this.getFrameId('prev')
         break
       default: // back to origin
         translateXY(currentFrameIndex, 0, 0, duration)
@@ -396,7 +396,7 @@ class Carousel extends React.Component {
 
     onTransitionEnd && setTimeout(() => onTransitionEnd(this.getSiblingFrames()), duration)
 
-    this.setState({currentFrameIndex: newcurrentFrameIndexId })
+    this.setState({currentFrameIndex: newCurrentFrameIndexId })
   }
 
   // debugFrames () {
